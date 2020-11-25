@@ -379,7 +379,7 @@ function polyfail(a, b, c) {
 // location of the feature, with description HTML from its properties.
 map.on('click', 'h3-hexes-fill-layer', function(e) {
     var coordinates = e.features[0].geometry.coordinates.slice();
-    var description = e.features[0].properties.h3i;
+    var description = e.features[0].properties.key;
 
     $("#btnInView").removeClass("btn-success");
     $("#btnSelected").addClass("btn-success");
@@ -637,10 +637,13 @@ function qghsuc(d, st, s, qs) {
     //This is where recs are populated!
     //query(datag, ts_start);
 
-    if (d.hits.total == 0) return;
+    if (d.hits.total == 0) {
+      allData = null;
+      viewData = null;
+    }
 
-    allData = d.hits;
-    present(allData);
+    viewData = d.hits;
+    present(viewData);
     var h3h = {};
     colors = [];
     var max = 0;
@@ -650,7 +653,7 @@ function qghsuc(d, st, s, qs) {
             //This was used to convert ES geohash aggregations to H3 aggregations. It's lossy and less performant than ES H3 term aggregation
             //max = geo2h3(d, h3h, p, max);
             bucket = d.aggregations.density.buckets[p];
-            h3h[bucket.h3i] = bucket.doc_count;
+            h3h[bucket.key] = bucket.doc_count;
             if (bucket.doc_count > max) {
                 max = bucket.doc_count;
             }
@@ -668,7 +671,7 @@ function qghsuc(d, st, s, qs) {
 
     var hexgj = geojson2h3.h3SetToFeatureCollection(Object.keys(h3h), hex => ({
         count: (h3h[hex] > 0 ? colorforval(h3h[hex], colors) : 0),
-        h3i: hex
+        key: hex
     }));
 
     //console.log(h3h);
@@ -691,7 +694,8 @@ function qghsuc(d, st, s, qs) {
         gh_next_data = null;
     }
     if ($("#btnInView").hasClass("btn-success")) {
-        query(datag, ts_start);
+        //done by each geohash query
+        //query(datag, ts_start);
     }
     if ($("#btnSelected").hasClass("btn-success")) {
         present(selectedData);
@@ -786,8 +790,8 @@ function queryrun(q) {
     if (q != "") {
       location.hash = "#query=" + encodeURI(JSON.stringify(datag));
     }
-    $("#btnInView").removeClass("btn-success");
-    $("#btnSelected").addClass("btn-success");
+    $("#btnInView").addClass("btn-success");
+    $("#btnSelected").removeClass("btn-success");
     $("#btnTotal").removeClass("btn-success");
     querygh2(datag);
 }
@@ -831,9 +835,9 @@ $(document).ready(function() {
     $('[data-toggle="popover"]').popover();
 
     $("#list").scroll(function(e) {
-        var val = Math.round(($(this)[0].scrollTop / $(this)[0].scrollHeight) * allData.hits.length) / allData.total;
-        var val2 = Math.round((($(this)[0].scrollTop + $(this)[0].clientHeight) / $(this)[0].scrollHeight) * allData.hits.length) / allData.total;
-        console.log(Math.round(val * allData.total) + " - " + Math.round(val2 * allData.total));
+        //var val = Math.round(($(this)[0].scrollTop / $(this)[0].scrollHeight) * allData.hits.length) / allData.total;
+        //var val2 = Math.round((($(this)[0].scrollTop + $(this)[0].clientHeight) / $(this)[0].scrollHeight) * allData.hits.length) / allData.total;
+        //console.log(Math.round(val * allData.total) + " - " + Math.round(val2 * allData.total));
     });
     $("#tbSearch").change(function(e) {
         queryrun($(this).val());
